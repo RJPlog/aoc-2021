@@ -1,12 +1,15 @@
 import java.io.File
 
-fun packDecoder(input1: String, input2: Int, input3: String = ""): Long {
+fun packDecoder(input1: String, puzzle_part: Int): Long {
 	var version: Int
 	var typID: Int
 	var versionSum: Long = 0
 	var opPacket = input1
 	var litValResult: Long = 0
-	var operator = input3
+	var operator: String = ""
+	var numberSubPackets: Int = 0
+	var condSubPack1: Boolean = false
+	var litValList = mutableListOf<Long>()
 
 	var i: Int = 0
 	while (opPacket.length > 7) {  //opPacket.length >5
@@ -20,11 +23,16 @@ fun packDecoder(input1: String, input2: Int, input3: String = ""): Long {
 			(0) -> operator = "sum"
 			(1) -> operator = "prod"
 			(2) -> operator = "min"
+			(4) -> operator = "data"
 			(3) -> operator = "max"
 			(5) -> operator = "greater"
 			(6) -> operator = "less"
 			(7) -> operator = "equal"
 		}
+		if (typID != 4) {
+		println("$operator")
+		}
+
 		opPacket = opPacket.drop(3)
 
 		if (typID == 4) {
@@ -39,6 +47,9 @@ fun packDecoder(input1: String, input2: Int, input3: String = ""): Long {
 				opPacket = opPacket.drop(5)
 			}
 
+			litValList.add(litVal.toLong(2))
+			println("     ${litVal.toLong(2)}")
+			//println("   $litValList")
 		} else {
 			if (opPacket[0] == '0') {
 				opPacket = opPacket.drop(1)
@@ -46,22 +57,40 @@ fun packDecoder(input1: String, input2: Int, input3: String = ""): Long {
 				val subPacketLength = opPacket.take(15).toInt(2)
 
 				opPacket = opPacket.drop(15)
-				if (input2 == 1) {
-					versionSum = versionSum + packDecoder(opPacket.take(subPacketLength), input2, operator)
+				if (puzzle_part == 1) {
+//					println("start Subpackage 0")
+					println("(")
+					versionSum = versionSum + packDecoder(opPacket.take(subPacketLength), puzzle_part)
+//					println("stop Subpackage 0")
+					println(")")
 				} else {
 					// when (operator)...
 
 				}
 				opPacket = opPacket.drop(subPacketLength)
 			} else if (opPacket[0] == '1') {
+				condSubPack1 = true
 				opPacket = opPacket.drop(1)
-				val numberSubPackets = opPacket.take(11).toInt(2)
+				numberSubPackets = opPacket.take(11).toInt(2)
+//				println("start subPack 1: ${opPacket.take(11).toInt(2)}")
+				println("[")
 				opPacket = opPacket.drop(11)
 			}
+
+		}
+//		println("numberSubPackets: $numberSubPackets")
+		if (condSubPack1) {
+		if (numberSubPackets == 0) {
+//			println("stop subPack 1")
+			println("]")
+			condSubPack1 = false
+			litValList.clear()
+		}
+				numberSubPackets -= 1
 		}
 	}
 
-	if (input2 == 1) {
+	if (puzzle_part == 1) {
 		return versionSum
 	} else {
 		return litValResult
@@ -76,7 +105,8 @@ fun main(args: Array<String>) {
 			opPacket = opPacket + it.toString().toInt(16).toString(2).padStart(4, '0')
 		}
 	}
-
+	println("start")
+	println()
 	var solution1 = packDecoder(opPacket, 1)
 	println()
 
